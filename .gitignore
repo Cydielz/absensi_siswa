@@ -1,0 +1,9 @@
+backend/.env
+backend/sekolah.db
+backend/.venv/
+backend/__pycache__/
+android/.gradle/
+android/build/
+android/app/build/
+.idea/
+.DS_Store
