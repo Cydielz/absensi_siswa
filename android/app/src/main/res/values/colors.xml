@@ -5,4 +5,8 @@
     <color name="accent">#22C55E</color>
     <color name="bg_main">#F8FAFC</color>
     <color name="text_dark">#1E293B</color>
+
+    <!-- Warna Tambahan yang Dipanggil oleh themes.xml -->
+    <color name="blue_700">#1D4ED8</color>
+    <color name="blue_900">#1E3A8A</color>
 </resources>
