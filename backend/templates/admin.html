@@ -1,29 +1,391 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin Absensi Siswa</title>
-<style>
-body{font-family:Arial,sans-serif;margin:0;background:#f3f7fb;color:#12233b}.wrap{max-width:1100px;margin:30px auto;padding:0 16px}.hero{background:#0b4f8a;color:#fff;padding:24px;border-radius:18px;margin-bottom:18px}.grid{display:grid;grid-template-columns:1fr 1.7fr;gap:18px}@media(max-width:800px){.grid{grid-template-columns:1fr}}.card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 5px 20px rgba(0,0,0,.06)}input,button{width:100%;padding:11px;border-radius:10px;border:1px solid #cbd5e1;box-sizing:border-box;margin:5px 0}button{background:#0b4f8a;color:white;border:0;font-weight:700;cursor:pointer}.btn2{background:#0d7b59}.btn3{background:#7a5a00}.msg{padding:10px;border-radius:10px;background:#e9f7ef;margin:6px 0}.err{background:#fee2e2}.muted{color:#64748b}.table-wrap{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px}th,td{padding:9px;border-bottom:1px solid #e5e7eb;text-align:left}th{background:#eff6ff;position:sticky;top:0}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Absensi Siswa - Admin</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-body: #f8fafc;
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --card-radius: 16px;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: #1e293b;
+        }
+
+        .navbar-custom {
+            background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            padding: 1rem 0;
+            box-shadow: 0 4px 20px -5px rgba(79, 70, 229, 0.4);
+        }
+
+        .card-custom {
+            background: #ffffff;
+            border: none;
+            border-radius: var(--card-radius);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 10px 15px -5px rgba(0,0,0,0.04);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .stat-card {
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .btn-custom-primary {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 600;
+        }
+
+        .btn-custom-primary:hover {
+            background-color: var(--primary-hover);
+            color: white;
+        }
+
+        .table-responsive-custom {
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .table custom-table {
+            vertical-align: middle;
+        }
+
+        .table custom-table thead {
+            background-color: #f1f5f9;
+            color: #475569;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-status {
+            padding: 0.4em 0.8em;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+
+        .search-box {
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+        }
+
+        .search-box input {
+            padding-left: 42px;
+            border-radius: 10px;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Form Modal Styling */
+        .modal-content {
+            border-radius: var(--card-radius);
+            border: none;
+        }
+    </style>
 </head>
 <body>
-<div class="wrap">
-<div class="hero"><h1>ABSENSI SISWA</h1><div>Backend Flask + SQLite + Fonnte</div></div>
-{% with messages = get_flashed_messages(with_categories=true) %}{% for cat,msg in messages %}<div class="msg {% if cat=='error' %}err{% endif %}">{{msg}}</div>{% endfor %}{% endwith %}
-<div class="grid">
-<div class="card"><h2>Tambah Siswa</h2><form method="post" action="/admin/siswa">
-<input name="nisn" placeholder="NISN" required>
-<input name="nama" placeholder="Nama lengkap" required>
-<input name="kelas" placeholder="Kelas (X IPA 1)" required>
-<input name="whatsapp_ortu" placeholder="WhatsApp orang tua, contoh 0812xxxx">
-<button>Simpan Siswa</button></form>
-<hr><p class="muted">Endpoint scan: <b>POST /scan</b> dengan JSON <code>{"nisn":"...","device_id":"..."}</code></p>
-<a href="/admin/export-today"><button type="button" class="btn2">Export Absensi Hari Ini (CSV)</button></a>
-</div>
-<div class="card"><h2>Siswa Terdaftar</h2><div class="table-wrap"><table><tr><th>NISN</th><th>Nama</th><th>Kelas</th><th>WA Ortu</th><th>Status</th><th>Aksi</th></tr>
-{% for s in students %}<tr><td>{{s['nisn']}}</td><td>{{s['nama']}}</td><td>{{s['kelas']}}</td><td>{{s['whatsapp_ortu'] or '-'}}</td><td>{{'Aktif' if s['aktif'] else 'Nonaktif'}}</td><td><form method="post" action="/admin/siswa/{{s['id']}}/toggle"><button type="submit" class="btn3">{{'Nonaktifkan' if s['aktif'] else 'Aktifkan'}}</button></form></td></tr>{% endfor %}</table></div></div>
-</div>
-</div>
-</body></html>
+
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-dark navbar-custom mb-4">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2 fw-bold fs-4" href="/">
+                <i class="fa-solid fa-graduation-cap fs-3"></i>
+                <span>Absensi Siswa SMAN 5 Kepulauan Aru - Admin</span>
+            </a>
+            <div class="d-flex align-items-center gap-2">
+                <a href="/admin/export-today" class="btn btn-light btn-sm fw-semibold shadow-sm">
+                    <i class="fa-solid fa-file-csv me-1 text-success"></i> Export Absensi Hari Ini
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mb-5">
+        
+        <!-- FLASH MESSAGES -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' }} alert-dismissible fade show card-custom mb-4" role="alert">
+                        <i class="fa-solid {{ 'fa-circle-exclamation' if category == 'error' else 'fa-circle-check' }} me-2"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <!-- DASHBOARD STATS -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-custom stat-card p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small fw-bold">TOTAL SISWA</div>
+                            <div class="fs-3 fw-bold mt-1 text-dark">{{ students|length }}</div>
+                        </div>
+                        <div class="bg-indigo-light p-3 rounded-3 text-primary bg-light">
+                            <i class="fa-solid fa-users fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 col-lg-4">
+                <div class="card card-custom p-3 border-start border-success border-5">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <div class="text-muted small fw-bold">HADIR HARI INI</div>
+                            <div class="fs-3 fw-bold mt-1 text-success">{{ attendance_today if attendance_today is defined else 0 }}</div>
+                        </div>
+                        <div class="p-3 rounded-3 text-success bg-light">
+                            <i class="fa-solid fa-clipboard-user fs-3"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT CARD -->
+        <div class="card card-custom p-4">
+            
+            <!-- HEADER TOOLBAR -->
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                <div>
+                    <h5 class="fw-bold mb-1">Daftar Siswa</h5>
+                    <p class="text-muted small mb-0">Kelola data siswa dan status keaktifan absensi</p>
+                </div>
+                
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <!-- Search Input -->
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Cari nama atau NISN...">
+                    </div>
+                    
+                    <!-- Button Tambah Siswa -->
+                    <button class="btn btn-custom-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalTambah">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Tambah Siswa</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- TABLE RESPONSIVE WRAPPER -->
+            <div class="table-responsive table-responsive-custom">
+                <table class="table custom-table align-middle table-hover mb-0" id="siswaTable">
+                    <thead>
+                        <tr>
+                            <th class="ps-3">Siswa</th>
+                            <th>NISN</th>
+                            <th>Kelas</th>
+                            <th>No. WhatsApp Ortu</th>
+                            <th>Absen Hari Ini</th>
+                            <th>Status Aktif</th>
+                            <th class="text-end pe-3">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in students %}
+                        <tr>
+                            <td class="ps-3">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="avatar-circle bg-light text-primary fw-bold rounded-circle d-flex align-items-center justify-content-center" style="width:40px; height:40px;">
+                                        {{ s.nama[0] | upper }}
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold text-dark search-target">{{ s.nama }}</div>
+                                        <div class="small text-muted d-md-none">NISN: {{ s.nisn }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="fw-medium search-target">{{ s.nisn }}</td>
+                            <td><span class="badge bg-secondary text-wrap">{{ s.kelas }}</span></td>
+                            <td>
+                                {% if s.whatsapp_ortu %}
+                                    <a href="https://wa.me/{{ s.whatsapp_ortu }}" target="_blank" class="text-decoration-none text-success fw-semibold">
+                                        <i class="fa-brands fa-whatsapp me-1"></i>{{ s.whatsapp_ortu }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted small">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if s.sudah_absen %}
+                                    <span class="badge bg-success-subtle text-success badge-status border border-success-subtle">
+                                        <i class="fa-solid fa-check me-1"></i>Sudah Absen
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-muted badge-status border">Belum Absen</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form action="/admin/siswa/{{ s.id }}/toggle" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-link p-0 text-decoration-none">
+                                        {% if s.aktif %}
+                                            <span class="badge bg-success badge-status"><i class="fa-solid fa-toggle-on me-1"></i>Aktif</span>
+                                        {% else %}
+                                            <span class="badge bg-danger badge-status"><i class="fa-solid fa-toggle-off me-1"></i>Nonaktif</span>
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </td>
+                            <td class="text-end pe-3">
+                                <div class="btn-group">
+                                    <!-- Edit Button -->
+                                    <button class="btn btn-sm btn-outline-primary" 
+                                            onclick="openEditModal('{{ s.id }}', '{{ s.nisn }}', '{{ s.nama }}', '{{ s.kelas }}', '{{ s.whatsapp_ortu or '' }}')">
+                                        <i class="fa-solid fa-pen"></i>
+                                    </button>
+                                    
+                                    <!-- Delete Button -->
+                                    <form action="/admin/siswa/{{ s.id }}/delete" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menghapus siswa ini?');">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger ms-1">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="fa-solid fa-folder-open fs-2 mb-2 d-block"></i>
+                                Belum ada data siswa.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- MODAL TAMBAH SISWA -->
+    <div class="modal fade" id="modalTambah" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-3">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-plus text-primary me-2"></i>Tambah Siswa Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/admin/siswa" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">NISN</label>
+                            <input type="text" name="nisn" class="form-control" placeholder="Contoh: 1234567890" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nama Lengkap</label>
+                            <input type="text" name="nama" class="form-control" placeholder="Nama Siswa" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Kelas</label>
+                            <input type="text" name="kelas" class="form-control" placeholder="Contoh: TK-A / TK-B" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nomor WhatsApp Orang Tua</label>
+                            <input type="text" name="whatsapp_ortu" class="form-control" placeholder="Contoh: 081234567890">
+                            <div class="form-text">Gunakan format angka langsung (misal: 0812...).</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-custom-primary">Simpan Data</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL EDIT SISWA -->
+    <div class="modal fade" id="modalEdit" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-3">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-pen-to-square text-primary me-2"></i>Edit Data Siswa</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="formEdit" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">NISN</label>
+                            <input type="text" id="edit_nisn" name="nisn" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nama Lengkap</label>
+                            <input type="text" id="edit_nama" name="nama" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Kelas</label>
+                            <input type="text" id="edit_kelas" name="kelas" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Nomor WhatsApp Orang Tua</label>
+                            <input type="text" id="edit_wa" name="whatsapp_ortu" class="form-control">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-custom-primary">Perbarui Data</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS BOOTSTRAP & SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Modal Edit Populator
+        function openEditModal(id, nisn, nama, kelas, wa) {
+            document.getElementById('formEdit').action = '/admin/siswa/' + id + '/edit';
+            document.getElementById('edit_nisn').value = nisn;
+            document.getElementById('edit_nama').value = nama;
+            document.getElementById('edit_kelas').value = kelas;
+            document.getElementById('edit_wa').value = wa;
+            
+            var editModal = new bootstrap.Modal(document.getElementById('modalEdit'));
+            editModal.show();
+        }
+
+        // Live Search Filter Functionality
+        document.getElementById('searchInput').addEventListener('keyup', function() {
+            let filter = this.value.toLowerCase();
+            let rows = document.querySelectorAll('#siswaTable tbody tr');
+
+            rows.forEach(row => {
+                let text = row.innerText.toLowerCase();
+                if (text.includes(filter)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -45,12 +45,19 @@ public class MainActivity extends AppCompatActivity {
     private final ExecutorService executor = Executors.newSingleThreadExecutor();
     private SharedPreferences prefs;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
-        buildUi();
-    }
+ @Override
+protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    
+    // 1. Simpan preferensi aplikasi
+    prefs = getSharedPreferences(PREFS, MODE_PRIVATE);
+    
+    // 2. Muat tampilan dari file activity_main.xml TERLEBIH DAHULU
+    setContentView(R.layout.activity_main);
+    
+    // 3. Panggil metode untuk inisialisasi tombol, kamera, atau listener UI
+    buildUi();
+}
 
     private int dp(float value) {
         return (int) (value * getResources().getDisplayMetrics().density + 0.5f);

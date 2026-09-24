@@ -2,7 +2,7 @@ import os
 import sqlite3
 from datetime import datetime
 from zoneinfo import ZoneInfo
-from flask import Flask, jsonify, request, render_template, redirect, url_for, flash
+from flask import Flask, jsonify, request, render_template, redirect, url_for, flash, Response
 import requests
 from dotenv import load_dotenv
 
@@ -88,8 +88,22 @@ def send_whatsapp(target: str, message: str):
 def home():
     conn = db()
     students = conn.execute('SELECT * FROM siswa ORDER BY nama COLLATE NOCASE').fetchall()
+    
+    # Hitung absensi hari ini
+    today = now_local().strftime('%Y-%m-%d')
+    attended_today = conn.execute(
+        "SELECT DISTINCT siswa_id FROM absensi WHERE tanggal = ?", (today,)
+    ).fetchall()
+    attended_ids = {row['siswa_id'] for row in attended_today}
+    
+    students_data = []
+    for s in students:
+        s_dict = dict(s)
+        s_dict['sudah_absen'] = s_dict['id'] in attended_ids
+        students_data.append(s_dict)
+
     conn.close()
-    return render_template('admin.html', students=students)
+    return render_template('admin.html', students=students_data, attendance_today=len(attended_ids))
 
 
 @app.get('/api/health')
@@ -265,7 +279,6 @@ def export_today():
     w.writerow(['NISN', 'Nama', 'Kelas', 'Tanggal', 'Jam Masuk', 'Status'])
     for r in rows:
         w.writerow([r['nisn'], r['nama'], r['kelas'], r['tanggal'], r['jam_masuk'], r['status']])
-    from flask import Response
     return Response(out.getvalue(), mimetype='text/csv; charset=utf-8', headers={
         'Content-Disposition': f'attachment; filename="absensi-{tanggal}.csv"'
     })
@@ -279,6 +292,44 @@ def qr_payload(nisn):
     if not row:
         return jsonify({'success': False, 'message': 'Siswa tidak ditemukan.'}), 404
     return jsonify({'success': True, 'qr_value': row['nisn'], 'student': dict(row)})
+
+
+# ==========================================
+# ROUTE PERBAIKAN: EDIT DATA SISWA
+# ==========================================
+@app.route('/admin/siswa/<int:id>/edit', methods=['POST'])
+def edit_siswa(id):
+    nisn = request.form.get('nisn', '').strip()
+    nama = request.form.get('nama', '').strip()
+    kelas = request.form.get('kelas', '').strip()
+    wa = request.form.get('whatsapp_ortu', '').strip()
+    
+    conn = db()
+    try:
+        conn.execute(
+            "UPDATE siswa SET nisn=?, nama=?, kelas=?, whatsapp_ortu=? WHERE id=?", 
+            (nisn, nama, kelas, wa, id)
+        )
+        conn.commit()
+        flash('Data siswa berhasil diperbarui!', 'success')
+    except sqlite3.IntegrityError:
+        flash('Gagal memperbarui: NISN sudah digunakan oleh siswa lain.', 'error')
+    finally:
+        conn.close()
+    return redirect(url_for('home'))
+
+
+# ==========================================
+# ROUTE PERBAIKAN: HAPUS SISWA
+# ==========================================
+@app.route('/admin/siswa/<int:id>/delete', methods=['POST'])
+def delete_siswa(id):
+    conn = db()
+    conn.execute("DELETE FROM siswa WHERE id=?", (id,))
+    conn.commit()
+    conn.close()
+    flash('Siswa berhasil dihapus!', 'success')
+    return redirect(url_for('home'))
 
 
 if __name__ == '__main__':
