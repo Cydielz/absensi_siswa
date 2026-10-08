@@ -1,7 +1,16 @@
+# Rahasia & data (JANGAN diunggah ke GitHub)
 backend/.env
 backend/sekolah.db
+backend/sekolah.db-wal
+backend/sekolah.db-shm
+backend/backups/
+backend/uploads/
+backend/logs/
 backend/.venv/
+backend/venv/
 backend/__pycache__/
+backend/tests/__pycache__/
+.pytest_cache/
 android/.gradle/
 android/build/
 android/app/build/

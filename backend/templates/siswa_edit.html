@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Edit {{ s['nama'] }}{% endblock %}
+{% block content %}
+<h1>Edit Siswa</h1>
+<div class="grid g2">
+<div class="card">
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>NISN</label><input name="nisn" value="{{ s['nisn'] }}" required>
+  <label>Nama lengkap</label><input name="nama" value="{{ s['nama'] }}" required>
+  <label>Kelas</label><input name="kelas" value="{{ s['kelas'] }}" required>
+  <label>WhatsApp orang tua/wali</label><input name="whatsapp_ortu" value="{{ s['whatsapp_ortu'] or '' }}">
+  <label>Foto siswa (tampil di layar scanner agar petugas bisa memverifikasi)</label>
+  <input type="file" name="foto" accept="image/*">
+  {% if s['foto'] %}<p><img class="photo" style="width:80px;height:80px" src="{{ url_for('foto', siswa_id=s['id'], v=s['foto']) }}" alt="">
+    <label style="display:inline"><input type="checkbox" name="hapus_foto" style="width:auto"> hapus foto</label></p>{% endif %}
+  <p><button>Simpan</button> <a class="btn sec" href="{{ url_for('siswa_list') }}">Batal</a></p>
+</form></div>
+<div class="card"><h2>Tindakan lain</h2>
+<p><a class="btn sec" href="{{ url_for('kartu', id=s['id']) }}">Lihat / cetak kartu QR</a></p>
+<form method="post" action="{{ url_for('siswa_reset_kartu', siswa_id=s['id']) }}"
+      data-confirm="Kartu QR lama siswa ini tidak akan bisa dipakai lagi. Lanjutkan?">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="warn">Reset kartu (kartu hilang / dibagikan)</button></form>
+<hr>
+<form method="post" action="{{ url_for('siswa_delete', siswa_id=s['id']) }}"
+      data-confirm="HAPUS PERMANEN {{ s['nama'] }} beserta seluruh riwayat absensinya? Tindakan ini tidak bisa dibatalkan. (Gunakan Nonaktifkan bila hanya pindah/lulus.)">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="bad">Hapus permanen</button></form>
+</div></div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Absensi {{ tanggal }} {% if is_today %}<span class="badge b-hadir">hari ini</span>{% endif %}</h1>
+<form class="card row" method="get">
+  <div><label>Tanggal</label><input type="date" name="tanggal" value="{{ tanggal }}"></div>
+  <div><label>Kelas</label>
+    <select name="kelas"><option value="">Semua kelas</option>
+      {% for k in kelas_options %}<option {{ 'selected' if k==kelas }}>{{ k }}</option>{% endfor %}
+    </select></div>
+  <div class="auto"><button>Tampilkan</button></div>
+  <div class="auto"><a class="btn sec" href="{{ url_for('export_day', tanggal=tanggal, kelas=kelas) }}">Unduh Excel</a></div>
+  <div class="auto"><a class="btn sec" href="{{ url_for('export_day', tanggal=tanggal, kelas=kelas, format='csv') }}">CSV</a></div>
+</form>
+
+<div class="stats">
+  <div class="stat"><b>{{ total }}</b>Siswa aktif</div>
+  <div class="stat"><b>{{ counts['Hadir'] }}</b>Hadir</div>
+  <div class="stat"><b>{{ counts['Terlambat'] }}</b>Terlambat</div>
+  <div class="stat"><b>{{ counts['Izin'] }}</b>Izin</div>
+  <div class="stat"><b>{{ counts['Sakit'] }}</b>Sakit</div>
+  <div class="stat"><b>{{ counts['Alpa'] }}</b>Alpa</div>
+  <div class="stat"><b>{{ counts['Belum'] }}</b>Belum absen</div>
+</div>
+
+{% if counts['Belum'] %}
+<form class="card row" method="post" action="{{ url_for('tandai_alpa') }}"
+      data-confirm="Tandai {{ counts['Belum'] }} siswa yang belum absen sebagai ALPA pada {{ tanggal }}?">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="tanggal" value="{{ tanggal }}"><input type="hidden" name="kelas" value="{{ kelas }}">
+  <div class="muted">Setelah jam masuk berakhir, tandai siswa yang tidak tercatat sebagai Alpa. Siswa Izin/Sakit isi manual di tabel.</div>
+  <div class="auto"><button class="warn">Tandai {{ counts['Belum'] }} yang belum absen = Alpa</button></div>
+</form>
+{% endif %}
+
+<div class="card table-wrap">
+<table>
+<tr><th>Kelas</th><th>NISN</th><th>Nama</th><th>Status</th><th>Jam</th><th>Ubah status / keterangan</th></tr>
+{% for r in rows %}
+<tr>
+  <td>{{ r['kelas'] }}</td><td>{{ r['nisn'] }}</td><td>{{ r['nama'] }}</td>
+  <td><span class="badge b-{{ (r['status'] or 'belum')|lower }}">{{ r['status'] or 'Belum' }}</span></td>
+  <td>{{ r['jam_masuk'] or '-' }}</td>
+  <td>
+    <form method="post" action="{{ url_for('absensi_set') }}" class="row" style="flex-wrap:nowrap">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="siswa_id" value="{{ r['id'] }}"><input type="hidden" name="tanggal" value="{{ tanggal }}">
+      <input type="hidden" name="back_kelas" value="{{ kelas }}">
+      <select name="status" style="min-width:105px">
+        <option value="">— pilih —</option>
+        {% for st in statuses %}<option {{ 'selected' if st==r['status'] }}>{{ st }}</option>{% endfor %}
+      </select>
+      <input name="keterangan" value="{{ r['keterangan'] or '' }}" placeholder="Keterangan" style="min-width:120px">
+      <button class="sm auto">Simpan</button>
+    </form>
+  </td>
+</tr>
+{% else %}<tr><td colspan="6" class="muted">Belum ada siswa aktif. Tambahkan di menu Siswa atau Import.</td></tr>{% endfor %}
+</table>
+</div>
+{% endblock %}

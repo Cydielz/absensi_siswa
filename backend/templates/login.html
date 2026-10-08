@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Masuk{% endblock %}
+{% block content %}
+<div class="login card">
+  <h1>📋 {{ nama_sekolah }}</h1>
+  <p class="muted">Masuk sebagai admin untuk mengelola absensi.</p>
+  <form method="post">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>Username</label><input name="username" autocomplete="username" required autofocus>
+    <label>Password</label><input name="password" type="password" autocomplete="current-password" required>
+    <p><button style="width:100%">Masuk</button></p>
+  </form>
+</div>
+{% endblock %}

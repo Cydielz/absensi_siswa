@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Log WhatsApp{% endblock %}
+{% block content %}
+<h1>Log Notifikasi WhatsApp</h1>
+{% if not token_set %}<div class="msg error">FONNTE_TOKEN belum diisi di <code>backend/.env</code> — pesan akan berstatus gagal. Isi token lalu restart server, kemudian klik "Kirim ulang gagal".</div>{% endif %}
+<div class="card row">
+  <form method="get" class="row" style="flex:1 1 300px">
+    <div><label>Status</label><select name="status">
+      <option value="">Semua</option>
+      {% for st in ['pending','retry','sent','failed'] %}<option {{ 'selected' if st==status }}>{{ st }}</option>{% endfor %}</select></div>
+    <div class="auto"><button>Filter</button></div>
+  </form>
+  <div class="auto muted small">Terkirim: {{ summary.get('sent',0) }} · Antre: {{ summary.get('pending',0)+summary.get('retry',0) }} · Gagal: {{ summary.get('failed',0) }}</div>
+  <form class="auto" method="post" action="{{ url_for('wa_retry') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="warn">Kirim ulang semua gagal</button></form>
+</div>
+<div class="card table-wrap"><table>
+<tr><th>Waktu</th><th>Siswa</th><th>Tujuan</th><th>Status</th><th>Percobaan</th><th>Keterangan</th><th></th></tr>
+{% for r in rows %}
+<tr><td>{{ r['created_at'] }}</td><td>{{ r['nama'] or '-' }}</td><td>{{ r['target'] }}</td>
+<td><span class="badge b-{{ r['status'] }}">{{ r['status'] }}</span></td><td>{{ r['attempts'] }}</td>
+<td class="small muted" style="max-width:320px;word-break:break-word">{{ (r['last_response'] or '')[:160] }}</td>
+<td>{% if r['status'] in ('failed','retry') %}<form class="inline" method="post" action="{{ url_for('wa_retry') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="id" value="{{ r['id'] }}">
+  <button class="sm sec">Kirim ulang</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="7" class="muted">Belum ada notifikasi.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

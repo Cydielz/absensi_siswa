@@ -1,25 +1,19 @@
-# APK Absensi Siswa
+# Aplikasi Android — Scanner Absensi
 
-Aplikasi Android ini adalah scanner QR NISN. Setelah QR terbaca, APK mengirim JSON ke backend Flask:
+Scanner QR kontinu (ZXing) yang mengirim hasil ke server Flask.
 
-`POST /scan`
+## Build
+Otomatis lewat GitHub Actions (`.github/workflows/android.yml`) → unduh artifact `absensi-siswa-debug-apk`.
+Atau Android Studio: buka folder `android/`, Run.
 
-```json
-{"nisn":"0012345678","device_id":"ANDROID_DEVICE_ID"}
-```
+## Pemakaian
+1. Buka aplikasi, izinkan kamera.
+2. Hubungkan ke server: scan QR dari web admin (*Pengaturan → Hubungkan HP Scanner*) **atau** isi manual di ⚙ Pengaturan, lalu *Tes koneksi*.
+3. Biarkan terbuka; arahkan ke kartu siswa. Kode sama dalam 6 detik diabaikan agar tidak terkirim ganda.
 
-### Build APK
-1. Buka folder `android` menggunakan Android Studio.
-2. Tunggu Gradle melakukan sync dependency.
-3. Pastikan Android SDK 35 terpasang.
-4. Pilih **Build > Build APK(s)**.
-5. APK debug akan berada di `app/build/outputs/apk/debug/app-debug.apk`.
+Hasil: **hijau** hadir · **kuning** terlambat · **biru** sudah absen · **merah** ditolak/gagal.
 
-### Konfigurasi server di APK
-Alamat server dapat diisi di layar utama, contoh:
-`http://192.168.1.10:5000`
-
-HP dan laptop/server harus bisa saling terhubung di jaringan yang sama. Untuk penggunaan melalui internet, sebaiknya gunakan HTTPS/reverse proxy.
-
-### Catatan
-Token Fonnte tidak ditanam di APK. Token disimpan di server Flask sebagai environment variable.
+## Catatan teknis
+- Hanya QR berformat `ABSEN:<nisn>:<tanda-tangan>` yang diterima server; aplikasi mengirim isi QR apa adanya.
+- `/scan` memakai header `X-API-Key`. Kunci disimpan di SharedPreferences (privat aplikasi; `allowBackup=false`).
+- Lalu lintas HTTP biasa dipakai karena server berada di LAN sekolah.

@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% block title %}Siswa{% endblock %}
+{% block content %}
+<h1>Data Siswa <span class="muted small">({{ total }} siswa)</span></h1>
+<div class="grid g2">
+<div class="card"><h2>Tambah Siswa</h2>
+<form method="post" action="{{ url_for('siswa_add') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>NISN (10 digit)</label><input name="nisn" inputmode="numeric" pattern="\d{1,10}" required>
+  <label>Nama lengkap</label><input name="nama" required>
+  <label>Kelas</label><input name="kelas" list="kls" placeholder="X IPA 1" required>
+  <datalist id="kls">{% for k in kelas_options %}<option value="{{ k }}">{% endfor %}</datalist>
+  <label>WhatsApp orang tua/wali (opsional)</label><input name="whatsapp_ortu" placeholder="0812xxxxxxx">
+  <p><button>Simpan Siswa</button> <a class="btn sec" href="{{ url_for('import_page') }}">Import dari Excel</a></p>
+</form></div>
+<div class="card"><h2>Aksi per Kelas</h2>
+<form method="post" action="{{ url_for('kelas_aksi') }}" data-confirm="Lanjutkan aksi untuk seluruh siswa di kelas ini?">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Kelas asal</label>
+  <select name="dari" required><option value="">— pilih —</option>{% for k in kelas_options %}<option>{{ k }}</option>{% endfor %}</select>
+  <label>Kelas tujuan (untuk naik kelas / ganti nama)</label><input name="ke" placeholder="XI IPA 1">
+  <p class="row">
+    <button class="auto" name="aksi" value="pindah">Pindahkan semua siswa</button>
+    <button class="auto bad" name="aksi" value="nonaktifkan">Nonaktifkan (lulus)</button>
+  </p>
+  <p class="muted small">Tips akhir tahun: pindahkan kelas XII lebih dulu → nonaktifkan, lalu XI → XII, X → XI.
+  Riwayat absensi tetap tersimpan.</p>
+</form></div>
+</div>
+
+<form class="card row" method="get">
+  <div><label>Cari nama / NISN</label><input name="q" value="{{ q }}"></div>
+  <div><label>Kelas</label><select name="kelas"><option value="">Semua</option>
+    {% for k in kelas_options %}<option {{ 'selected' if k==kelas }}>{{ k }}</option>{% endfor %}</select></div>
+  <div><label>Status</label><select name="aktif">
+    <option value="">Semua</option><option value="1" {{ 'selected' if aktif=='1' }}>Aktif</option>
+    <option value="0" {{ 'selected' if aktif=='0' }}>Nonaktif</option></select></div>
+  <div class="auto"><button>Cari</button></div>
+</form>
+
+<div class="card table-wrap"><table>
+<tr><th></th><th>NISN</th><th>Nama</th><th>Kelas</th><th>WA Ortu</th><th>Status</th><th>Aksi</th></tr>
+{% for s in rows %}
+<tr>
+  <td>{% if s['foto'] %}<img class="photo" src="{{ url_for('foto', siswa_id=s['id'], v=s['foto']) }}" alt="">{% else %}<div class="photo"></div>{% endif %}</td>
+  <td>{{ s['nisn'] }}</td><td>{{ s['nama'] }}</td><td>{{ s['kelas'] }}</td><td>{{ s['whatsapp_ortu'] or '-' }}</td>
+  <td><span class="badge {{ 'b-hadir' if s['aktif'] else 'b-belum' }}">{{ 'Aktif' if s['aktif'] else 'Nonaktif' }}</span></td>
+  <td style="white-space:nowrap">
+    <a class="btn sm sec" href="{{ url_for('siswa_edit', siswa_id=s['id']) }}">Edit</a>
+    <a class="btn sm sec" href="{{ url_for('kartu', id=s['id']) }}">Kartu</a>
+    <form class="inline" method="post" action="{{ url_for('siswa_toggle', siswa_id=s['id']) }}"
+          data-confirm="{{ 'Nonaktifkan' if s['aktif'] else 'Aktifkan' }} {{ s['nama'] }}?">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="sm warn">{{ 'Nonaktifkan' if s['aktif'] else 'Aktifkan' }}</button></form>
+  </td>
+</tr>
+{% else %}<tr><td colspan="7" class="muted">Tidak ada data.</td></tr>{% endfor %}
+</table>
+<div class="pager">
+  {% if page > 1 %}<a class="btn sm sec" href="{{ url_for('siswa_list', q=q, kelas=kelas, aktif=aktif, page=page-1) }}">‹ Sebelumnya</a>{% endif %}
+  <span class="muted small">Halaman {{ page }} / {{ pages }}</span>
+  {% if page < pages %}<a class="btn sm sec" href="{{ url_for('siswa_list', q=q, kelas=kelas, aktif=aktif, page=page+1) }}">Berikutnya ›</a>{% endif %}
+</div></div>
+{% endblock %}

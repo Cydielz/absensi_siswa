@@ -1,9 +1,7 @@
-#!/usr/bin/env bash
-set -e
+#!/usr/bin/env sh
 cd "$(dirname "$0")"
-python3 -m venv .venv 2>/dev/null || true
-source .venv/bin/activate
-python -m pip install -r requirements.txt
+[ -d .venv ] || python3 -m venv .venv
+. .venv/bin/activate
+pip install -q -r requirements.txt
 [ -f .env ] || cp .env.example .env
-python seed.py
 python app.py

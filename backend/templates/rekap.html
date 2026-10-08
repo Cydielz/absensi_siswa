@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Rekap{% endblock %}
+{% block content %}
+<h1>Rekap Bulanan — {{ judul }}</h1>
+<form class="card row" method="get">
+  <div><label>Bulan</label><input type="month" name="bulan" value="{{ bulan }}"></div>
+  <div><label>Kelas</label><select name="kelas"><option value="">Semua kelas</option>
+    {% for k in kelas_options %}<option {{ 'selected' if k==kelas }}>{{ k }}</option>{% endfor %}</select></div>
+  <div class="auto"><button>Tampilkan</button></div>
+  <div class="auto"><a class="btn sec" href="{{ url_for('rekap_export', bulan=bulan, kelas=kelas) }}">Unduh Excel</a></div>
+  <div class="auto"><a class="btn sec" href="{{ url_for('rekap_export', bulan=bulan, kelas=kelas, format='csv') }}">CSV</a></div>
+</form>
+<p class="muted small">Hari efektif bulan ini: <b>{{ hari }}</b> hari (hari yang ada siswa hadir/terlambat).
+% kehadiran = (Hadir + Terlambat) ÷ hari efektif.</p>
+<div class="card table-wrap"><table>
+<tr><th>Kelas</th><th>NISN</th><th>Nama</th><th>Hadir</th><th>Terlambat</th><th>Izin</th><th>Sakit</th><th>Alpa</th><th>% Hadir</th></tr>
+{% for d in data %}
+<tr><td>{{ d['kelas'] }}</td><td>{{ d['nisn'] }}</td><td>{{ d['nama'] }}</td>
+<td>{{ d['h'] }}</td><td>{{ d['t'] }}</td><td>{{ d['i'] }}</td><td>{{ d['sk'] }}</td><td>{{ d['al'] }}</td>
+<td><span class="badge {{ 'b-hadir' if d['persen']>=90 else ('b-terlambat' if d['persen']>=75 else 'b-alpa') }}">{{ d['persen'] }}%</span></td></tr>
+{% else %}<tr><td colspan="9" class="muted">Tidak ada data.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

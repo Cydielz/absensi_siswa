@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Import Siswa{% endblock %}
+{% block content %}
+<h1>Import Siswa dari Excel / CSV</h1>
+<div class="grid g2">
+<div class="card">
+<form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>File (.xlsx atau .csv)</label><input type="file" name="berkas" accept=".xlsx,.csv,.txt" required>
+  <p><label style="display:inline"><input type="checkbox" name="perbarui" checked style="width:auto">
+    Perbarui nama/kelas/WA bila NISN sudah ada</label></p>
+  <p><button>Import</button></p>
+</form></div>
+<div class="card"><h2>Format</h2>
+<p>Kolom: <b>NISN, Nama, Kelas, WhatsApp Ortu</b> (baris pertama = judul kolom).</p>
+<ul class="small">
+<li>NISN 10 digit. Nol di depan yang hilang karena Excel dilengkapi otomatis.</li>
+<li>Nomor WA boleh 0812…, 812…, atau +62812… (otomatis jadi 62812…).</li>
+<li>WA boleh kosong.</li></ul>
+<p><a class="btn sec" href="{{ url_for('import_template') }}">Unduh template Excel</a></p>
+</div></div>
+{% if report %}
+<div class="card"><h2>Hasil import</h2>
+<p>✅ Ditambahkan: <b>{{ report.added }}</b> · 🔄 Diperbarui: <b>{{ report.updated }}</b> · ⚠️ Dilewati: <b>{{ report.error_count }}</b></p>
+{% if report.errors %}<ul class="small">{% for e in report.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+{% if report.error_count > report.errors|length %}<p class="muted small">…dan {{ report.error_count - report.errors|length }} baris lain.</p>{% endif %}{% endif %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Pengaturan{% endblock %}
+{% block content %}
+<h1>Pengaturan</h1>
+<div class="grid g2">
+<div class="card"><h2>Umum & Notifikasi</h2>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Nama sekolah</label><input name="nama_sekolah" value="{{ s.nama_sekolah }}" required>
+  <label>Batas jam masuk (scan setelah jam ini = Terlambat)</label>
+  <input name="batas_terlambat" value="{{ s.batas_terlambat }}" pattern="([01]\d|2[0-3]):[0-5]\d" placeholder="07:15" required>
+  <p><label style="display:inline"><input type="checkbox" name="wa_aktif" style="width:auto" {{ 'checked' if s.wa_aktif=='1' }}>
+    Kirim notifikasi WhatsApp ke orang tua</label></p>
+  <label>Template pesan — gunakan {nama} {nisn} {kelas} {status} {tanggal} {jam} {sekolah}</label>
+  <textarea name="wa_template" required>{{ s.wa_template }}</textarea>
+  <p><button>Simpan</button></p>
+</form>
+<p class="small muted">Zona waktu server: <code>{{ tz }}</code> (ubah lewat TIMEZONE di .env). Token Fonnte:
+{{ 'terisi ✅' if token_set else 'belum diisi ⚠️' }}.
+{% if legacy %}<br><b>⚠️ ALLOW_LEGACY_NISN=1 aktif:</b> QR berisi NISN polos masih diterima (kurang aman).{% endif %}</p>
+</div>
+
+<div class="card"><h2>Hubungkan HP Scanner</h2>
+<p class="small">Di aplikasi Android, buka layar scan lalu arahkan kamera ke QR ini — alamat server & API key terisi otomatis.</p>
+{% if is_local %}<div class="msg error small">Alamat <code>{{ server_url }}</code> tidak bisa dijangkau dari HP. Buka halaman ini lewat IP server (mis. http://192.168.x.x:5000) atau isi alamat di bawah.</div>{% endif %}
+<form method="get" class="row"><div><label>Alamat server untuk HP</label><input name="server_url" value="{{ server_url }}"></div>
+  <div class="auto"><button class="sec">Perbarui QR</button></div></form>
+<div class="qrbox setup-qr" style="margin:12px 0">{{ setup_svg|safe }}</div>
+<details><summary class="small">Atau isi manual (API key)</summary><p><code>{{ api_key }}</code></p></details>
+<p class="small muted">QR ini berisi API key. Jangan dipajang di tempat umum.</p>
+</div></div>
+
+<div class="grid g2">
+<div class="card"><h2>Ganti Password Admin</h2>
+<form method="post" action="{{ url_for('ganti_password') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>Password lama</label><input type="password" name="lama" required autocomplete="current-password">
+  <label>Password baru (min. 8 karakter)</label><input type="password" name="baru" required minlength="8" autocomplete="new-password">
+  <label>Ulangi password baru</label><input type="password" name="ulang" required minlength="8" autocomplete="new-password">
+  <p><button>Ganti Password</button></p></form></div>
+<div class="card"><h2>Backup Database</h2>
+<p class="small">Backup otomatis dibuat setiap hari di folder <code>backend/backups</code> (14 terakhir disimpan). Salin folder itu ke flashdisk/Drive secara berkala.</p>
+<p><a class="btn ok" href="{{ url_for('backup_download') }}">Unduh backup sekarang</a></p></div>
+</div>
+{% endblock %}

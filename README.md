@@ -1,147 +1,60 @@
-# ABSENSI SISWA — QR NISN + Flask + SQLite + Fonnte
+# Absensi Siswa v2
 
-Paket ini berisi aplikasi absensi berdasarkan alur:
+Absensi siswa dengan **scan QR kartu**, dashboard admin berbasis web, dan **notifikasi WhatsApp** ke orang tua (Fonnte).
+Server berjalan di satu komputer sekolah (Windows/Linux); HP guru/petugas memakai aplikasi Android sebagai scanner.
 
-**Kamera HP Android → QR Code berisi NISN → HTTP POST JSON `/scan` → Flask → validasi siswa → cek absensi hari ini → simpan tanggal & jam masuk → Fonnte → WhatsApp orang tua/wali.**
-
-## Isi paket
-
-- `backend/` — server Python Flask, SQLite, halaman admin, API scan, rekap harian, export CSV, integrasi Fonnte.
-- `android/` — proyek Android Studio untuk aplikasi scanner QR.
-- `.github/workflows/android.yml` — build APK debug otomatis di GitHub Actions.
-
-## Menjalankan backend di Windows
-
-Pastikan Python 3.10+ tersedia.
-
-Cara paling mudah: buka `backend/start_server.bat`.
-
-Atau dari Command Prompt:
-
-```bat
-cd backend
-py -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-copy .env.example .env
-python seed.py
-python app.py
+```
+HP Android (scan QR kontinu) ──Wi-Fi──▶ Server Flask + SQLite ──▶ Antrean WA (latar belakang) ──▶ Fonnte
+                                         ▲
+                              Admin: browser (login)
 ```
 
-Buka di laptop: `http://127.0.0.1:5000`
+## Yang baru di v2
+| Area | Perubahan |
+|---|---|
+| Keamanan | Login admin + proteksi CSRF; `/scan` wajib **API key**; QR bertanda tangan HMAC (tidak bisa dibuat sendiri dari NISN); batas percobaan login; secret/API key/password dibuat otomatis |
+| Android | Scan **kontinu** (tanpa menekan tombol per siswa), hasil berwarna (hijau/kuning/biru/merah), foto siswa, bunyi & getar, QR setup otomatis, tes koneksi |
+| Alur | WA dikirim di **latar belakang** (scan selalu cepat), log + kirim ulang otomatis/manual; status **Terlambat**, Izin, Sakit, Alpa; tombol "Tandai Alpa" |
+| Admin | Dashboard per tanggal/kelas, siswa (cari, filter, paginasi, edit, hapus), import Excel/CSV, cetak kartu QR, rekap bulanan + % kehadiran, ekspor Excel/CSV, naik kelas massal, pengaturan, ganti password, backup |
+| Teknis | Backup harian otomatis, server produksi (waitress), log berkas, zona waktu eksplisit, 37 tes otomatis, migrasi database v1 otomatis |
 
-Untuk HP di Wi-Fi yang sama, gunakan IP laptop, misalnya `http://192.168.1.10:5000`.
+## Menjalankan server
+1. Pasang Python 3.10+.
+2. Windows: klik dua kali `backend/start_server.bat` (Linux/macOS: `backend/start_server.sh`).
+3. **Pertama kali**, jendela server menampilkan **password admin** dan **API key** — catat. Semua rahasia tersimpan di `backend/.env`.
+4. Isi di `backend/.env`: `FONNTE_TOKEN` dan `TIMEZONE` (WIB `Asia/Jakarta`, WITA `Asia/Makassar`, WIT `Asia/Jayapura`), lalu jalankan ulang.
+5. Buka alamat yang tertera di jendela server (mis. `http://192.168.1.20:5000`) dan login.
 
-### Firewall Windows
+> Beri komputer server **IP tetap** (reservasi DHCP di router) agar alamat tidak berubah. Izinkan port 5000 di firewall Windows untuk jaringan privat.
 
-Bila HP tidak bisa terhubung ke laptop, jalankan Command Prompt sebagai Administrator:
+## Alur kerja harian
+1. **Awal tahun:** Import siswa (menu *Import*) → cetak kartu (menu *Kartu QR*) → bagikan.
+2. **Hubungkan HP:** menu *Pengaturan → Hubungkan HP Scanner* menampilkan QR. Buka aplikasi di HP, arahkan kamera ke QR itu — alamat & API key terisi otomatis.
+3. **Pagi hari:** petugas membiarkan aplikasi terbuka, siswa menunjukkan kartu. Layar hijau = hadir, kuning = terlambat, biru = sudah absen, merah = ditolak.
+4. **Setelah jam masuk:** di *Dashboard*, isi Izin/Sakit sesuai surat, lalu klik **Tandai yang belum absen = Alpa**.
+5. **Akhir bulan:** menu *Rekap* → unduh Excel.
 
-```bat
-netsh advfirewall firewall add rule name="Flask Absensi Siswa" dir=in action=allow protocol=TCP localport=5000
+## Keamanan — hal penting
+- Kartu hilang/dibagikan → *Edit siswa → Reset kartu*, lalu cetak ulang.
+- Foto siswa (menu Edit) ditampilkan di layar scanner agar petugas dapat memastikan pemilik kartu.
+- **Jangan unggah `backend/.env` atau `sekolah.db` ke GitHub** (sudah di `.gitignore`).
+- Jika arsip lama berisi `.env` pernah dibagikan, **ganti token Fonnte** di dashboard Fonnte.
+- Aplikasi ini untuk jaringan lokal sekolah. Jangan membuka port 5000 ke internet tanpa HTTPS.
+
+## Migrasi dari versi 1
+1. Salin file v2 **menimpa** folder lama, **kecuali** `backend/.env` dan `backend/sekolah.db` (jangan dihapus).
+2. Jalankan server. Database dimigrasi otomatis (data siswa & absensi aman). Rahasia baru (`QR_SECRET`, API key, password admin) ditambahkan ke `.env` Anda.
+3. **Cetak ulang kartu QR** — QR lama (NISN polos) ditolak. Sementara masa transisi boleh `ALLOW_LEGACY_NISN=1` di `.env` (kurang aman, matikan setelah kartu baru dibagikan).
+4. Instal APK baru dari GitHub Actions (artifact `absensi-siswa-debug-apk`).
+5. Hapus folder `backend/venv` lama bila ada (tidak perlu ikut disimpan).
+
+## Pengembangan
 ```
-
-## Konfigurasi Fonnte
-
-Edit `backend/.env`:
-
-```env
-FONNTE_TOKEN=ISI_TOKEN_FONNTE_DI_SINI
-FONNTE_COUNTRY_CODE=62
-TIMEZONE=Asia/Jayapura
+cd backend && pip install -r requirements-dev.txt && python -m pytest -q
 ```
+Android: lihat `android/README.md`. CI GitHub Actions menjalankan tes backend lalu membuild APK.
 
-Token Fonnte **jangan pernah ditaruh di APK**. Backend yang memanggil `https://api.fonnte.com/send`.
-
-Nomor WhatsApp orang tua/wali disimpan pada `whatsapp_ortu`.
-
-## Data siswa
-
-Admin membuka `http://IP-SERVER:5000/` lalu menambahkan:
-
-- NISN
-- Nama lengkap
-- Kelas
-- WhatsApp orang tua/wali
-
-Database `sekolah.db` dibuat otomatis.
-
-## API scan
-
-`POST /scan` dengan JSON:
-
-```json
-{
-  "nisn": "0012345678",
-  "device_id": "HP-ABSEN-01"
-}
-```
-
-Sistem otomatis:
-
-1. Validasi NISN.
-2. Cek absensi pada tanggal berjalan.
-3. Tolak pencatatan kedua untuk siswa yang sama pada hari yang sama.
-4. Simpan tanggal dan jam masuk.
-5. Bila nomor WA orang tua tersedia dan Fonnte dikonfigurasi, kirim pemberitahuan.
-
-### Rekap hari ini
-
-`GET /api/attendance/today`
-
-### Export CSV
-
-`GET /admin/export-today`
-
-## Build APK tanpa Android Studio (disarankan)
-
-Anda **tidak perlu menginstal Android Studio, JDK, Android SDK, atau Gradle** di komputer. GitHub Actions akan menyiapkan semuanya di server cloud secara otomatis. Workflow menggunakan JDK 17, Android SDK 35, dan Gradle 8.7. Dokumentasi resmi `setup-gradle` mendukung pemilihan versi Gradle melalui `gradle-version`, sedangkan `setup-android` dapat memasang paket SDK yang diperlukan.
-
-### Langkah 1 — Buat repository GitHub
-
-1. Masuk ke GitHub dan buat repository baru, misalnya `absensi-siswa`.
-2. Ekstrak ZIP ini.
-3. Upload seluruh isi folder `AbsensiSiswaTKA` ke repository tersebut. Pastikan folder `.github/workflows/android.yml` ikut ter-upload.
-
-### Langkah 2 — Jalankan build
-
-1. Buka repository GitHub Anda.
-2. Pilih menu **Actions**.
-3. Pilih workflow **Build APK Android**.
-4. Tekan **Run workflow**.
-5. Tunggu sampai status menjadi centang hijau.
-6. Buka hasil workflow tersebut.
-7. Pada bagian **Artifacts**, download `absensi-siswa-debug-apk`.
-8. Di dalam ZIP artifact itu terdapat `app-debug.apk`, yang dapat dipasang pada HP Android untuk pengujian.
-
-Workflow juga otomatis berjalan setiap kali perubahan pada folder `android/` atau file workflow di-push ke repository.
-
-### Hasil APK
-
-File yang dibuat oleh GitHub Actions:
-
-`android/app/build/outputs/apk/debug/app-debug.apk`
-
-Dependency QR scanner menggunakan ZXing Android Embedded dan akan diambil otomatis oleh Gradle saat build.
-
-### Catatan
-
-APK **debug** cocok untuk instalasi dan pengujian di HP sekolah. Untuk distribusi resmi/Play Store, sebaiknya dibuat **release APK/AAB yang ditandatangani (signed)** menggunakan keystore.
-
-## Penggunaan aplikasi Android
-
-1. Instal APK.
-2. Masukkan alamat server Flask, contoh `http://192.168.1.10:5000`.
-3. Tekan **Simpan Alamat Server**.
-4. Tekan **SCAN QR CODE**.
-5. Arahkan kamera ke QR yang berisi NISN.
-6. Aplikasi menampilkan hasil absensi.
-
-Format QR yang paling sederhana adalah hanya angka NISN, misalnya:
-
-`0012345678`
-
-Aplikasi juga menerima teks `NISN:0012345678`.
-
-## Catatan keamanan
-
-Starter ini cocok untuk jaringan sekolah/LAN. Halaman admin saat ini belum diberi login; sebelum dipasang di internet publik, tambahkan autentikasi admin, HTTPS, rate limiting, dan backup database.
+## Batasan yang diketahui
+- Scan tidak disimpan offline di HP; bila Wi-Fi putus, layar merah "Gagal terhubung" dan kartu perlu di-scan ulang.
+- Hari efektif rekap dihitung dari hari yang ada siswa hadir/terlambat (belum ada kalender libur).
+- Password admin awal tersimpan polos di `.env`; ganti lewat *Pengaturan* agar tersimpan sebagai hash.

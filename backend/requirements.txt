@@ -1,3 +1,8 @@
 Flask>=3.1,<4
 requests>=2.32,<3
 python-dotenv>=1.0,<2
+tzdata>=2024.1
+waitress>=3.0,<4
+openpyxl>=3.1,<4
+segno>=1.6,<2
+Pillow>=10.0

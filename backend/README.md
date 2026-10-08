@@ -39,3 +39,17 @@ Sistem:
 
 ## 5. Database
 SQLite dibuat otomatis dengan nama `sekolah.db`.
+
+## Jika muncul "Internal Server Error" di Windows
+
+Paket ini sudah menambahkan `tzdata` dan fallback UTC+09:00 agar zona waktu `Asia/Jayapura` tidak menyebabkan Flask HTTP 500 pada Windows. Setelah mengganti file, jalankan ulang:
+
+```bat
+cd backend
+.venv\Scripts\activate
+pip install -r requirements.txt
+py seed.py
+py app.py
+```
+
+Tes di laptop dengan membuka `http://127.0.0.1:5000/api/health`. Jika berhasil, browser akan menampilkan JSON dengan `"ok": true`.
